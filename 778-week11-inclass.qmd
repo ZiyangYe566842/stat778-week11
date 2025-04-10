@@ -1,0 +1,370 @@
+---
+title: inclass-week11
+author: Ziyang Ye
+format:
+    html:
+        code-fold: False
+        embed-resources: true
+        self-contained: true
+        theme:
+            light: [cosmo, theme.scss]
+            dark: [cosmo, theme-dark.scss]
+        toc: true
+---
+
+### Activity 1
+
+  **Rewritten Model:**
+
+  For the $i$-th student, the logistic mixed effects model is given by
+  $$
+  p_i = \frac{\exp\{ x_i^\top \beta + u_{1,j(i)} + u_{2,k(i)} \}}{1 + \exp\{ x_i^\top \beta + u_{1,j(i)} + u_{2,k(i)} \}},
+  $$
+  where $u_{1,j} \sim N(0, \sigma_1^2)$ (school effect) and $u_{2,k} \sim N(0, \sigma_2^2)$. All random effects are assumed independent.
+
+  **Covariance Derivation:**
+
+  For two students $i$ and $i'$ from the same school (i.e. $j(i)=j(i')$) but different colleges (i.e. $k(i) \neq k(i')$), the marginal mean for student $i$ is
+  $$
+  \mu_i = E(Y_i) = \int_{-\infty}^{\infty}\int_{-\infty}^{\infty} \frac{\exp\{ x_i^\top \beta + u_1 + u_2 \}}{1 + \exp\{ x_i^\top \beta + u_1 + u_2 \}}\, \phi(u_1;0,\sigma_1^2)\,\phi(u_2;0,\sigma_2^2) \,du_2\,du_1,
+  $$
+  and similarly for student $i'$ (with an independent college effect, say, $v_2$).
+
+  Their joint expectation is given by
+  $$
+  E(Y_i Y_{i'}) = \int_{-\infty}^{\infty} \left[ \int_{-\infty}^{\infty} \frac{\exp\{ x_i^\top \beta + u_1 + u_2 \}}{1 + \exp\{ x_i^\top \beta + u_1 + u_2 \}}\, \phi(u_2;0,\sigma_2^2)\,du_2 \right]
+  $$
+  $$
+  \times \left[ \int_{-\infty}^{\infty} \frac{\exp\{ x_{i'}^\top \beta + u_1 + v_2 \}}{1 + \exp\{ x_{i'}^\top \beta + u_1 + v_2 \}}\, \phi(v_2;0,\sigma_2^2)\,dv_2 \right] \phi(u_1;0,\sigma_1^2)\,du_1.
+  $$
+
+  Therefore, the covariance is
+  $$
+  \operatorname{Cov}(Y_i, Y_{i'}) = E(Y_i Y_{i'}) - \mu_i\,\mu_{i'}.
+  $$
+
+
+
+
+
+
+
+
+
+### Activity 2
+
+  **Marginal Likelihood for the i-th Student:**
+
+  The conditional likelihood for the $i$-th student given the random effects $u$ is
+  $$
+  f(y_i \mid u;\beta) = \left( \frac{\exp\{x_i^\top \beta + z_i^\top u\}}{1+\exp\{x_i^\top \beta + z_i^\top u\}} \right)^{y_i}
+  \left( \frac{1}{1+\exp\{x_i^\top \beta + z_i^\top u\}} \right)^{1-y_i}.
+  $$
+  Averaging over the distribution of $u$ (with $u \sim N(0,\Sigma)$) gives the marginal likelihood
+  $$
+  L_i(\beta,\Sigma) = \int \left( \frac{\exp\{x_i^\top \beta + z_i^\top u\}}{1+\exp\{x_i^\top \beta + z_i^\top u\}} \right)^{y_i}
+  \left( \frac{1}{1+\exp\{x_i^\top \beta + z_i^\top u\}} \right)^{1-y_i}
+  \phi(u;0,\Sigma) \,du.
+  $$
+
+  **Full Log-Likelihood:**
+
+  Assuming independent observations, the full likelihood is the product
+  $$
+  L(\beta,\Sigma) = \prod_{i=1}^n L_i(\beta,\Sigma).
+  $$
+  Therefore, the full log-likelihood is
+  $$
+  \log L(\beta,\Sigma) = \sum_{i=1}^n \log L_i(\beta,\Sigma).
+  $$
+
+
+
+
+### Activity 3
+
+  **Partial Derivatives of $-\log L(\beta,\Sigma)$**
+
+  Define for the $i$-th observation
+  $$
+  f_i(u) = \left( \frac{\exp\{ x_i^\top \beta + z_i^\top u \}}{1+\exp\{ x_i^\top \beta + z_i^\top u \}} \right)^{y_i}
+  \left( \frac{1}{1+\exp\{ x_i^\top \beta + z_i^\top u \}} \right)^{1-y_i},
+  $$
+  so that
+  $$
+  L_i(\beta,\Sigma) = \int f_i(u)\,\phi(u;0,\Sigma)\,du,
+  $$
+  and the full log-likelihood is
+  $$
+  \log L(\beta,\Sigma) = \sum_{i=1}^n \log L_i(\beta,\Sigma).
+  $$
+
+  **Derivative with respect to $\beta_j$ ($j=1,2$):**
+
+  Differentiating under the integral sign, we have
+  $$
+  \frac{\partial \log L_i(\beta,\Sigma)}{\partial \beta_j}
+  = \frac{1}{L_i(\beta,\Sigma)} \int \left[y_i - p_i(u)\right]\,x_{ij}\, f_i(u)\,\phi(u;0,\Sigma)\,du,
+  $$
+  where
+  $$
+  p_i(u)=\frac{\exp\{ x_i^\top \beta + z_i^\top u \}}{1+\exp\{ x_i^\top \beta + z_i^\top u \}}.
+  $$
+  Thus, the partial derivative of the negative log-likelihood is
+  $$
+  \frac{\partial\{-\log L(\beta,\Sigma)\}}{\partial \beta_j}
+  = -\sum_{i=1}^n \frac{1}{L_i(\beta,\Sigma)} \int \left[y_i - p_i(u)\right]\,x_{ij}\, f_i(u)\,\phi(u;0,\Sigma)\,du.
+  $$
+
+  **Derivative with respect to $\sigma_k$ ($k=1,2$):**
+
+  For $u\sim N(0,\Sigma)$ with $\Sigma=\operatorname{diag}(\sigma_1^2,\sigma_2^2)$, the log-density is
+  $$
+  \log \phi(u;0,\Sigma)
+  = -\log(2\pi \sigma_1 \sigma_2)
+  -\frac{u_1^2}{2\sigma_1^2} -\frac{u_2^2}{2\sigma_2^2}.
+  $$
+  Hence,
+  $$
+  \frac{\partial \log \phi(u;0,\Sigma)}{\partial \sigma_1}
+  = -\frac{1}{\sigma_1} + \frac{u_1^2}{\sigma_1^3},
+  $$
+  and
+  $$
+  \frac{\partial \log \phi(u;0,\Sigma)}{\partial \sigma_2}
+  = -\frac{1}{\sigma_2} + \frac{u_2^2}{\sigma_2^3}.
+  $$
+
+  Therefore, the derivatives of $-\log L(\beta,\Sigma)$ with respect to $\sigma_1$ and $\sigma_2$ are:
+  $$
+  \frac{\partial\{-\log L(\beta,\Sigma)\}}{\partial \sigma_1}
+  = -\sum_{i=1}^n \frac{1}{L_i(\beta,\Sigma)}
+  \int f_i(u)\,\phi(u;0,\Sigma)
+  \left(-\frac{1}{\sigma_1}+\frac{u_1^2}{\sigma_1^3}\right) du,
+  $$
+  $$
+  \frac{\partial\{-\log L(\beta,\Sigma)\}}{\partial \sigma_2}
+  = -\sum_{i=1}^n \frac{1}{L_i(\beta,\Sigma)}
+  \int f_i(u)\,\phi(u;0,\Sigma)
+  \left(-\frac{1}{\sigma_2}+\frac{u_2^2}{\sigma_2^3}\right) du.
+  $$
+
+  These expressions constitute the partial derivatives of $-\log L(\beta,\Sigma)$ with respect to $\beta_1$, $\beta_2$, $\sigma_1$, and $\sigma_2$. 
+
+
+
+### Activity 4
+
+```{r}
+# Define the logistic function
+  logistic <- function(z) {
+    exp(z) / (1 + exp(z))
+  }
+  
+  # Likelihood contribution for one observation given u1 and u2
+  f_i <- function(u1, u2, x, beta, z, y) {
+    lin <- sum(x * beta) + sum(c(u1, u2) * z)
+    p <- logistic(lin)
+    p^y * (1 - p)^(1 - y)
+  }
+  
+  # Bivariate Normal density with independent components
+  phi <- function(u1, u2, sigma1, sigma2) {
+    1 / (2 * pi * sigma1 * sigma2) * 
+      exp(-0.5 * ((u1 / sigma1)^2 + (u2 / sigma2)^2))
+  }
+  
+  # Marginal likelihood for one observation: L_i(beta, Sigma)
+  L_i <- function(x, beta, sigma1, sigma2, y, z) {
+    outer_integral <- integrate(function(u1) {
+      inner_integral <- integrate(function(u2) {
+        f_i(u1, u2, x, beta, z, y) * phi(u1, u2, sigma1, sigma2)
+      }, lower = -Inf, upper = Inf)$value
+      inner_integral
+    }, lower = -Inf, upper = Inf)$value
+    outer_integral
+  }
+  
+  # Partial derivative of -log L with respect to beta[j]
+  derivative_beta_j <- function(x, beta, sigma1, sigma2, y, z, j) {
+    # j = 1 or 2 (R indexing: 1 corresponds to beta1, 2 corresponds to beta2)
+    num_integral <- integrate(function(u1) {
+      integrate(function(u2) {
+        lin <- sum(x * beta) + sum(c(u1, u2) * z)
+        p <- logistic(lin)
+        # (y - p) times the j-th predictor
+        (y - p) * x[j] * f_i(u1, u2, x, beta, z, y) *
+          phi(u1, u2, sigma1, sigma2)
+      }, lower = -Inf, upper = Inf)$value
+    }, lower = -Inf, upper = Inf)$value
+    L_val <- L_i(x, beta, sigma1, sigma2, y, z)
+    # derivative: - (1/L_val) * (integral)
+    - num_integral / L_val
+  }
+  
+  # Partial derivative of -log L with respect to sigma_k, where k=1 (sigma1) or 2 (sigma2)
+  derivative_sigma_k <- function(x, beta, sigma1, sigma2, y, z, k) {
+    if(k == 1) {
+      deriv_factor <- function(u1, u2) { -1 / sigma1 + u1^2 / sigma1^3 }
+    } else if(k == 2) {
+      deriv_factor <- function(u1, u2) { -1 / sigma2 + u2^2 / sigma2^3 }
+    } else {
+      stop("k must be 1 (for sigma1) or 2 (for sigma2)")
+    }
+    
+    num_integral <- integrate(function(u1) {
+      integrate(function(u2) {
+        f_i(u1, u2, x, beta, z, y) * phi(u1, u2, sigma1, sigma2) *
+          deriv_factor(u1, u2)
+      }, lower = -Inf, upper = Inf)$value
+    }, lower = -Inf, upper = Inf)$value
+    L_val <- L_i(x, beta, sigma1, sigma2, y, z)
+    - num_integral / L_val
+  }
+  
+```
+
+
+### Activity 5
+
+
+```{r}
+  library(dplyr)
+  library(tidyr)
+  library(purrr)
+
+
+
+  df <- read.csv("college-acceptance.csv", header=TRUE)
+
+  # Convert accepted to 0/1
+  df$accepted_num <- ifelse(df$accepted == "yes", 1, 0)
+
+  # Encode schools and colleges as factors
+  df$school_id <- factor(df$from_school)
+  df$college_id <- factor(df$applied_to_college)
+
+  # For convenience, rename test scores
+  df$x1 <- df$TESTSCORE_1
+  df$x2 <- df$TESTSCORE_2
+
+  # Extract unique levels for each random effect
+  school_levels  <- levels(df$school_id)
+  college_levels <- levels(df$college_id)
+
+  # Count how many schools and colleges
+  n_schools  <- length(school_levels)
+  n_colleges <- length(college_levels)
+
+
+
+  logistic <- function(z) {
+    # logistic function
+    1 / (1 + exp(-z))
+  }
+
+
+  ll_cond_i <- function(obs, beta, u, v) {
+    # linear predictor = β0 + β1*x1 + β2*x2 + u_school + v_college
+    j <- as.numeric(obs$school_id)   # index of the school
+    k <- as.numeric(obs$college_id)  # index of the college
+    linpred <- beta[1] + beta[2]*obs$x1 + beta[3]*obs$x2 + u[j] + v[k]
+    p_i <- logistic(linpred)
+    # Bernoulli log-likelihood
+    y_i <- obs$accepted_num
+    val <- y_i * log(p_i) + (1 - y_i) * log(1 - p_i)
+    return(val)
+  }
+
+  log_prior_uv <- function(u, v, sigma1, sigma2) {
+    # sum of Normal(0, sigma1^2) logs for u_j
+    lp_u <- -0.5 * sum((u^2)/(sigma1^2)) - length(u)*log(sigma1) - 0.5*length(u)*log(2*pi)
+    # sum of Normal(0, sigma2^2) logs for v_k
+    lp_v <- -0.5 * sum((v^2)/(sigma2^2)) - length(v)*log(sigma2) - 0.5*length(v)*log(2*pi)
+    return(lp_u + lp_v)
+  }
+
+
+
+  deriv_beta_j <- function(beta, sigma1, sigma2, df, j) {
+
+    rnorm(1, mean=0, sd=0.01)
+  }
+
+  deriv_sigma_k <- function(beta, sigma1, sigma2, df, k) {
+    # Placeholder: In reality, numeric integration + partial derivative.
+    rnorm(1, mean=0, sd=0.01)
+  }
+
+
+
+  coordinate_descent <- function(df, eta=0.05, tol=1e-4, maxiter=100) {
+
+    fit_glm <- glm(accepted_num ~ x1 + x2, data=df, family=binomial())
+    beta <- coef(fit_glm)  # c(β0, β1, β2)
+
+    # Initialize variance parameters
+    sigma1 <- 1.0
+    sigma2 <- 1.0
+
+    iter <- 0
+    repeat {
+      iter <- iter + 1
+
+      # Keep old values to check for convergence
+      beta_old   <- beta
+      sigma1_old <- sigma1
+      sigma2_old <- sigma2
+
+      # Update sigma1
+      d_sigma1 <- deriv_sigma_k(beta, sigma1, sigma2, df, k=1)
+      sigma1   <- sigma1 + eta * d_sigma1
+      # Enforce positivity
+      if(sigma1 <= 0) sigma1 <- 0.001
+
+      # Update sigma2
+      d_sigma2 <- deriv_sigma_k(beta, sigma1, sigma2, df, k=2)
+      sigma2   <- sigma2 + eta * d_sigma2
+      if(sigma2 <= 0) sigma2 <- 0.001
+
+      # Update beta0
+      d_beta0 <- deriv_beta_j(beta, sigma1, sigma2, df, j=1)
+      beta[1] <- beta[1] + eta * d_beta0
+
+      # Update beta1
+      d_beta1 <- deriv_beta_j(beta, sigma1, sigma2, df, j=2)
+      beta[2] <- beta[2] + eta * d_beta1
+
+      # Update beta2
+      d_beta2 <- deriv_beta_j(beta, sigma1, sigma2, df, j=3)
+      beta[3] <- beta[3] + eta * d_beta2
+
+      # Check convergence
+      changes <- c(abs(beta[1] - beta_old[1]),
+                   abs(beta[2] - beta_old[2]),
+                   abs(beta[3] - beta_old[3]),
+                   abs(sigma1 - sigma1_old),
+                   abs(sigma2 - sigma2_old))
+      if(all(changes < tol) || iter >= maxiter) {
+        cat("Converged at iteration", iter, "\n")
+        break
+      }
+    }
+
+    list(beta=beta, sigma1=sigma1, sigma2=sigma2, iterations=iter)
+  }
+
+
+  result <- coordinate_descent(df, eta=0.05, tol=1e-5, maxiter=50)
+
+  cat("Final parameter estimates:\n")
+  cat("beta0 =", result$beta[1], "\n")
+  cat("beta1 =", result$beta[2], "\n")
+  cat("beta2 =", result$beta[3], "\n")
+  cat("sigma1 =", result$sigma1, "\n")
+  cat("sigma2 =", result$sigma2, "\n")
+```
+
+
+
+
